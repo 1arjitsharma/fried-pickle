@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Research Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0e0f;
+    --surface: #161718;
+    --surface2: #1e1f21;
+    --border: #2a2b2d;
+    --border2: #333435;
+    --text: #e8e6e1;
+    --text-muted: #7a7875;
+    --text-dim: #4a4845;
+    --accent: #c9a96e;
+    --accent-dim: #8a6d3f;
+    --green: #4caf7d;
+    --green-bg: #0d2018;
+    --red: #e05c5c;
+    --red-bg: #1f0d0d;
+    --amber: #e8b84b;
+    --amber-bg: #1f1608;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 300;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 3rem 2rem 6rem;
+  }
+
+  header {
+    margin-bottom: 3.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 480px;
+  }
+
+  .api-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .api-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .api-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-input:focus { border-color: var(--accent-dim); }
+  .api-input::placeholder { color: var(--text-dim); }
+
+  .api-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+
+  .api-hint a { color: var(--accent); text-decoration: none; }
+  .api-hint a:hover { text-decoration: underline; }
+
+  .search-section { margin-bottom: 2rem; }
+
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem 1.25rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .search-input:focus { border-color: var(--accent-dim); background: var(--surface2); }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .analyze-btn {
+    background: var(--accent);
+    color: #0d0e0f;
+    border: none;
+    border-radius: 6px;
+    padding: 0.85rem 1.75rem;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+
+  .analyze-btn:hover { opacity: 0.88; }
+  .analyze-btn:active { transform: scale(0.98); }
+  .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .chips-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+  }
+
+  .chip {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    transition: all 0.15s;
+  }
+
+  .chip:hover { border-color: var(--accent-dim); color: var(--accent); background: rgba(201,169,110,0.05); }
+
+  .status-bar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  .status-bar.on { display: flex; }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    display: none;
+    background: var(--red-bg);
+    border: 1px solid rgba(224,92,92,0.25);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    font-size: 13px;
+    color: var(--red);
+    font-family: var(--font-mono);
+    margin-bottom: 1.5rem;
+  }
+
+  .error-box.on { display: block; }
+
+  .memo {
+    display: none;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .memo.on { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .memo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .memo-company {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .memo-meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .rec-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    padding: 6px 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .rec-badge.buy { background: var(--green-bg); color: var(--green); border: 1px solid rgba(76,175,125,0.2); }
+  .rec-badge.hold { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(232,184,75,0.2); }
+  .rec-badge.pass { background: var(--red-bg); color: var(--red); border: 1px solid rgba(224,92,92,0.2); }
+  .rec-badge.neutral { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+  }
+
+  .metric-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .memo-section { margin-bottom: 1.75rem; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+
+  .section-body {
+    font-size: 14px;
+    color: #b8b5b0;
+    line-height: 1.75;
+  }
+
+  .risks-list { list-style: none; }
+
+  .risks-list li {
+    font-size: 14px;
+    color: #b8b5b0;
+    padding: 0.4rem 0 0.4rem 1.25rem;
+    position: relative;
+    line-height: 1.6;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .risks-list li:last-child { border-bottom: none; }
+
+  .risks-list li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--accent-dim);
+    font-family: var(--font-mono);
+  }
+
+  .memo-footer {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.03em;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 2rem 0;
+  }
+
+  @media (max-width: 560px) {
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .api-section { flex-direction: column; align-items: flex-start; }
+    h1 { font-size: 1.75rem; }
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <header>
+    <p class="eyebrow">Equity Research · Powered by Claude AI</p>
+    <h1>Investment<br><em>Research Assistant</em></h1>
+    <p class="subtitle">Generate structured analyst research briefs for any public company — overview, thesis, key risks, and a recommendation.</p>
+  </header>
+
+  <div class="api-section">
+    <span class="api-label">API Key</span>
+    <input type="password" class="api-input" id="api-key" placeholder="sk-ant-api03-..." />
+  </div>
+  <p class="api-hint" style="margin-top:-1.25rem; margin-bottom:1.75rem;">
+    Get your free API key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+  </p>
+
+  <div class="search-section">
+    <div class="search-row">
+      <input type="text" class="search-input" id="search" placeholder="Enter company name or ticker — e.g. Apple, NVDA, BlackRock..." />
+      <button class="analyze-btn" id="analyze-btn" onclick="run()">Analyze →</button>
+    </div>
+    <div class="chips">
+      <span class="chips-label">try:</span>
+      <span class="chip" onclick="go('NVIDIA')">NVDA</span>
+      <span class="chip" onclick="go('Goldman Sachs')">GS</span>
+      <span class="chip" onclick="go('BlackRock')">BLK</span>
+      <span class="chip" onclick="go('Fidelity Investments')">Fidelity</span>
+      <span class="chip" onclick="go('Johnson & Johnson')">JNJ</span>
+      <span class="chip" onclick="go('JPMorgan Chase')">JPM</span>
+    </div>
+  </div>
+
+  <div class="status-bar" id="status">
+    <div class="spinner"></div>
+    <span id="status-text">Researching company...</span>
+  </div>
+
+  <div class="error-box" id="error"></div>
+
+  <div class="memo" id="memo">
+    <div class="memo-header">
+      <div>
+        <p class="memo-company" id="r-name"></p>
+        <p class="memo-meta" id="r-meta"></p>
+      </div>
+      <span class="rec-badge" id="r-badge"></span>
+    </div>
+
+    <div class="metrics-grid" id="r-metrics"></div>
+
+    <div class="memo-section">
+      <p class="section-label">Business Overview</p>
+      <p class="section-body" id="r-overview"></p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="memo-section">
+      <p class="section-label">Investment Thesis</p>
+      <p class="section-body" id="r-thesis"></p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="memo-section">
+      <p class="section-label">Key Risks</p>
+      <ul class="risks-list" id="r-risks"></ul>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="memo-section">
+      <p class="section-label">Analyst Verdict</p>
+      <p class="section-body" id="r-verdict"></p>
+    </div>
+
+    <p class="memo-footer">Generated by AI for educational purposes only. Not financial advice. Data approximate as of April 2026. Built by Arjit Sharma.</p>
+  </div>
+
+</div>
+
+<script>
+function go(n){ document.getElementById('search').value=n; run(); }
+
+async function run(){
+  const q = document.getElementById('search').value.trim();
+  const key = document.getElementById('api-key').value.trim();
+
+  if(!q){ alert('Enter a company name or ticker.'); return; }
+  if(!key){ alert('Enter your Anthropic API key above.'); return; }
+
+  const statusEl = document.getElementById('status');
+  const statusText = document.getElementById('status-text');
+  const errEl = document.getElementById('error');
+  const memoEl = document.getElementById('memo');
+  const btn = document.getElementById('analyze-btn');
+
+  statusEl.className='status-bar on';
+  errEl.className='error-box';
+  memoEl.className='memo';
+  btn.disabled=true; btn.textContent='Analyzing...';
+
+  const msgs=['Pulling company data...','Analyzing financials...','Identifying key risks...','Writing research brief...'];
+  let mi=0;
+  statusText.textContent=msgs[0];
+  const tick=setInterval(()=>{ mi=(mi+1)%msgs.length; statusText.textContent=msgs[mi]; },2200);
+
+  try {
+    const sys = `You are a senior equity research analyst at a top investment bank. Generate a structured research brief.
+Return ONLY valid raw JSON — no markdown fences, no explanation, just the JSON object.
+
+Use this exact schema:
+{
+  "companyName": "Full official company name",
+  "ticker": "Stock ticker or Private",
+  "sector": "Industry sector",
+  "recommendation": "BUY or HOLD or PASS or NEUTRAL",
+  "metrics": [
+    {"label": "Market Cap", "value": "e.g. $2.1T"},
+    {"label": "P/E Ratio", "value": "e.g. 28x or N/A"},
+    {"label": "Revenue (TTM)", "value": "e.g. $119B"},
+    {"label": "52-wk Range", "value": "e.g. $110–$200 or Private"}
+  ],
+  "overview": "2-3 sentences covering what the company does, its market position, and primary revenue drivers.",
+  "thesis": "2-3 sentences on the investment case — key growth drivers, competitive moat, and why the stock is or isn't attractive at current levels.",
+  "risks": ["Specific risk 1 in one clear sentence.", "Specific risk 2 in one clear sentence.", "Specific risk 3 in one clear sentence."],
+  "verdict": "1-2 sentence final stance with a clear recommendation rationale."
+}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: sys,
+        messages: [{ role: 'user', content: `Generate a research brief for: ${q}` }]
+      })
+    });
+
+    clearInterval(tick);
+
+    if(!res.ok){
+      const e = await res.json();
+      throw new Error(e.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+
+    const tb = data.content && data.content.find(b => b.type==='text');
+    if(!tb) throw new Error('No content returned from API');
+
+    let raw = tb.text.trim().replace(/^```[\w]*\n?/,'').replace(/\n?```$/,'').trim();
+    const b = JSON.parse(raw);
+
+    document.getElementById('r-name').textContent = b.companyName;
+    document.getElementById('r-meta').textContent = `${b.ticker} · ${b.sector} · April 2026`;
+
+    const badge = document.getElementById('r-badge');
+    const rec = (b.recommendation||'NEUTRAL').toUpperCase();
+    badge.textContent = rec;
+    badge.className = 'rec-badge ' + ({'BUY':'buy','HOLD':'hold','PASS':'pass'}[rec]||'neutral');
+
+    document.getElementById('r-metrics').innerHTML = b.metrics.map(m =>
+      `<div class="metric-card"><p class="metric-label">${m.label}</p><p class="metric-value">${m.value}</p></div>`
+    ).join('');
+
+    document.getElementById('r-overview').textContent = b.overview;
+    document.getElementById('r-thesis').textContent = b.thesis;
+    document.getElementById('r-risks').innerHTML = b.risks.map(r => `<li>${r}</li>`).join('');
+    document.getElementById('r-verdict').textContent = b.verdict;
+
+    statusEl.className='status-bar';
+    memoEl.className='memo on';
+
+  } catch(e){
+    clearInterval(tick);
+    statusEl.className='status-bar';
+    errEl.className='error-box on';
+    errEl.textContent='Error: ' + e.message;
+  }
+
+  btn.disabled=false; btn.textContent='Analyze →';
+}
+
+document.getElementById('search').addEventListener('keydown', e => {
+  if(e.key==='Enter') run();
+});
+</script>
+</body>
+</html>
